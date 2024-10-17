@@ -1,188 +1,235 @@
-import os
-import pytz
-import time
 import requests
+import time
+from colorama import init, Fore, Back, Style
+import sys
+import os
+import datetime
+import pytz
 from datetime import datetime
-from colorama import Fore, Style, init
-from fake_useragent import UserAgent
 
 init(autoreset=True)
 
-def clear_terminal():
-    os.system('cls' if os.name == 'nt' else 'clear')
 
-def art():
-    print(
-        "\033[0m\033[1;93m" + r"""  
-██╗  ██╗ █████╗  ██████╗██╗  ██╗███████╗██████╗     ██╗    ██╗ ██████╗ ██████╗ ██╗     ██████╗     ██████╗ ██████╗ 
-██║  ██║██╔══██╗██╔════╝██║ ██╔╝██╔════╝██╔══██╗    ██║    ██║██╔═══██╗██╔══██╗██║     ██╔══██╗    ██╔══██╗██╔══██╗
-███████║███████║██║     █████╔╝ █████╗  ██████╔╝    ██║ █╗ ██║██║   ██║██████╔╝██║     ██║  ██║    ██████╔╝██║  ██║
-██╔══██║██╔══██║██║     ██╔═██╗ ██╔══╝  ██╔══██╗    ██║███╗██║██║   ██║██╔══██╗██║     ██║  ██║    ██╔══██╗██║  ██║
-██║  ██║██║  ██║╚██████╗██║  ██╗███████╗██║  ██║    ╚███╔███╔╝╚██████╔╝██║  ██║███████╗██████╔╝    ██████╔╝██████╔╝
-╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝     ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═════╝     ╚═════╝ ╚═════╝
-""" + "\033[0m")
+# API endpoints
+api_claim = 'https://elb.seeddao.org/api/v1/seed/claim'
+api_balance = 'https://elb.seeddao.org/api/v1/profile/balance'
+api_checkin = 'https://elb.seeddao.org/api/v1/login-bonuses'
+api_upgrade_storage = 'https://elb.seeddao.org/api/v1/seed/storage-size/upgrade'
+api_upgrade_mining = 'https://elb.seeddao.org/api/v1/seed/mining-speed/upgrade'
+api_upgrade_holy = 'https://elb.seeddao.org/api/v1/upgrades/holy-water'
+api_profile = 'https://elb.seeddao.org/api/v1/profile'
 
-    print(f"{Fore.CYAN + Style.BRIGHT}Join our Telegram: https://t.me/HACKER_WORLD_BD{Style.RESET_ALL}\n")
-    
-    print(f"{Fore.GREEN + Style.BRIGHT}Seed Mining{Style.RESET_ALL}\n")
-    
-    draw_tree()
+# Request headers
+headers = {
+    'accept': 'application/json, text/plain, */*',
+    'accept-language': 'en-ID,en-US;q=0.9,en;q=0.8,id;q=0.7',
+    'content-length': '0',
+    'dnt': '1',
+    'origin': 'https://cf.seeddao.org',
+    'priority': 'u=1, i',
+    'referer': 'https://cf.seeddao.org/',
+    'sec-ch-ua': '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-site',
+    'telegram-data': 'tokens',
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+}
 
-def draw_tree():
-    tree = f"""
-        {Fore.GREEN}
-         %&&& && & 
-      $&&& && &\\/& &
-     &\\/&\\| &\\/&\\|$
-    //&& &\\/&\\|&&\\/&\ 
-    &\\/(/&/&||/& &\\/&
-      &() &\\/&|()|/&
-       &_\\/&_/&&&|& 
-         & && & &|
-            ||/ 
-            |||
-            ||| {Style.RESET_ALL}
-
-    """
-    print(tree)
-    print(f"{Fore.GREEN + Style.BRIGHT}- Auto claim{Style.RESET_ALL}")
-    print(f"{Fore.GREEN + Style.BRIGHT}- Auto Tasks{Style.RESET_ALL}")
-    print(f"{Fore.GREEN + Style.BRIGHT}- Auto spin{Style.RESET_ALL}")
-
-def load_tokens(filename):
-    with open(filename, 'r') as file:
-        return [line.strip() for line in file if line.strip()]
-
-def get_headers(token):
-    ua = UserAgent()
-    return {
-        'accept': 'application/json, text/plain, */*',
-        'accept-language': 'en-ID,en-US;q=0.9,en;q=0.8,id;q=0.7',
-        'content-length': '0',
-        'dnt': '1',
-        'origin': 'https://cf.seeddao.org',
-        'priority': 'u=1, i',
-        'referer': 'https://cf.seeddao.org/',
-        'sec-ch-ua': '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'telegram-data': token,
-        'user-agent': ua.random
-    }
-
-def handle_request(method, url, headers, data=None):
+def read_tokens():
     try:
-        if method == 'GET':
-            response = requests.get(url, headers=headers)
-        elif method == 'POST':
-            response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        return response.json()
-    except requests.Timeout:
-        print(f"{Fore.RED + Style.BRIGHT}Request timed out.")
-    except requests.ConnectionError:
-        print(f"{Fore.RED + Style.BRIGHT}Connection error occurred.")
-    except requests.RequestException as e:
-        # تحقق من رسالة الخطأ الخاصة
-        if "login-bonuses" in str(e):
-            print(f"{Fore.YELLOW + Style.BRIGHT}Daily bonus already claimed, please come back tomorrow.")
-        elif "seed/claim" in str(e):
-            print(f"{Fore.YELLOW + Style.BRIGHT}Claim is not available now.")
+        with open('query.txt', 'r') as file:
+            tokens = file.read().strip().split('\n')
+        return tokens
+    except FileNotFoundError:
+        print(Fore.RED + "query.txt file is missing.")
+        return []
+    except Exception as e:
+        print(Fore.RED + "Error reading tokens:", str(e))
+        return []
+
+def fetch_worm_status():
+    response = requests.get('https://elb.seeddao.org/api/v1/worms', headers=headers)
+    if response.status_code == 200:
+        worm_info = response.json()['data']
+        next_refresh = worm_info.get('next_worm')
+        worm_caught = worm_info.get('is_caught', False)
+
+        if next_refresh:
+            next_refresh_dt = datetime.fromisoformat(next_refresh[:-1] + '+00:00')
+            now_utc = datetime.now(pytz.utc)
+            time_difference_seconds = (next_refresh_dt - now_utc).total_seconds()
+            hours = int(time_difference_seconds // 3600)
+            minutes = int((time_difference_seconds % 3600) // 60)
+            print(f"{Fore.GREEN+Back.BLACK+Style.BRIGHT}[ Worms ]: Next in {hours} hours {minutes} minutes - Status: {'Caught' if worm_caught else 'Available'}")
         else:
-            print(f"{Fore.RED + Style.BRIGHT}Request failed.")  # طباعة رسالة عامة دون تفاصيل
-    return None
+            print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Worms ]: 'next_worm' data not available.")
+        return worm_info
+    else:
+        print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Worms ]: Error retrieving worm data.")
+        return None
 
-def login(token):
-    url_profile = "https://elb.seeddao.org/api/v1/profile2"
-    url_balance = "https://elb.seeddao.org/api/v1/profile/balance"
-    headers = get_headers(token)
+def capture_worm():
+    worm_info = fetch_worm_status()
+    if worm_info and not worm_info.get('is_caught', True):
+        response = requests.post('https://elb.seeddao.org/api/v1/worms/catch', headers=headers)
+        if response.status_code == 200:
+            print(f"{Fore.GREEN+Back.BLACK+Style.BRIGHT}[ Worms ]: Worm captured successfully")
+        elif response.status_code == 400:
+            print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Worms ]: Already captured")
+        elif response.status_code == 404:
+            print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Worms ]: Worm not found")
+        else:
+            print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Worms ]: Capture failed, status code:", response)
+    else:
+        print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Worms ]: Worm unavailable or already captured.")
 
-    data = handle_request('GET', url_profile, headers)
-    balance_data = handle_request('GET', url_balance, headers)
-    if balance_data:
-        balance = balance_data.get("data") / 1000000000
-        print(f"{Fore.GREEN + Style.BRIGHT}Balance: {Fore.WHITE + Style.BRIGHT}{balance:.3f}")
+def fetch_profile():
+    response = requests.get(api_profile, headers=headers)
+    if response.status_code == 200:
+        profile_info = response.json()
+        user_name = profile_info['data']['name']
+        print(f"{Fore.CYAN+Back.BLACK+Style.BRIGHT}============== [ Profile | {user_name} ] ==============")
 
-def daily_bonus(token):
-    url_bonus = "https://elb.seeddao.org/api/v1/login-bonuses"
-    headers = get_headers(token)
+        upgrade_levels = {}
+        for upgrade in profile_info['data']['upgrades']:
+            upgrade_type = upgrade['upgrade_type']
+            upgrade_level = upgrade['upgrade_level']
+            if upgrade_type in upgrade_levels:
+                if upgrade_level > upgrade_levels[upgrade_type]:
+                    upgrade_levels[upgrade_type] = upgrade_level
+            else:
+                upgrade_levels[upgrade_type] = upgrade_level
 
-    response_data = handle_request('POST', url_bonus, headers)
-    if response_data:
-        reward = response_data.get("data", {}).get("amount")
-        print(f"{Fore.GREEN + Style.BRIGHT}Daily Reward Claimed: {Fore.WHITE + Style.BRIGHT}{int(reward)/1000000000}" if reward else f"{Fore.YELLOW + Style.BRIGHT}Daily Reward Already Claimed")
+        for upgrade_type, level in upgrade_levels.items():
+            print(f"{Fore.BLUE+Back.BLACK+Style.BRIGHT}[ {upgrade_type.capitalize()} Level ]: {level + 1}")
+    else:
+        print(Fore.RED + "Error retrieving profile data, status code:", response.status_code)
+        return None
 
-def claim(token):
-    url_claim = "https://elb.seeddao.org/api/v1/seed/claim"
-    headers = get_headers(token)
+def verify_balance():
+    response = requests.get(api_balance, headers=headers)
+    if response.status_code == 200:
+        balance_info = response.json()
+        print(f"{Fore.YELLOW+Back.BLACK+Style.BRIGHT}[ Balance ]: {balance_info['data'] / 1000000000}")
+        return True
+    else:
+        print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Balance ]: Error | {response.status_code}")
+        return False
 
-    response_data = handle_request('POST', url_claim, headers)
-    if response_data:
-        amount = response_data.get("data", {}).get("amount")
-        print(f"{Fore.GREEN + Style.BRIGHT}Seed Claimed: {Fore.WHITE + Style.BRIGHT}{int(amount)/1000000000}" if amount else f"{Fore.YELLOW + Style.BRIGHT}Seed Already Claimed")
+def perform_daily_checkin():
+    response = requests.post(api_checkin, headers=headers)
+    if response.status_code == 200:
+        checkin_data = response.json()
+        day = checkin_data.get('data', {}).get('no', '')
+        print(f"{Fore.GREEN+Back.BLACK+Style.BRIGHT}[ Check-in ]: Successfully checked in | Day {day}")
+    else:
+        checkin_data = response.json()
+        if checkin_data.get('message') == 'already claimed for today':
+            print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Check-in ]: Already checked in today")
+        else:
+            print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Check-in ]: Failed | {checkin_data}")
 
-def spin(token):
-    url_ticket = "https://elb.seeddao.org/api/v1/spin-ticket"
-    url_spin = "https://elb.seeddao.org/api/v1/spin-reward"
-    headers = get_headers(token)
+def upgrade_storage(confirm):
+    if confirm.lower() == 'y':
+        response = requests.post(api_upgrade_storage, headers=headers)
+        if response.status_code == 200:
+            return '[ Upgrade Storage ]: Successful'
+        else:
+            return '[ Upgrade Storage ]: Insufficient balance'
+    else:
+        return None
 
-    ticket_data = handle_request('GET', url_ticket, headers)
-    if ticket_data:
-        tickets = ticket_data.get('data', [])
-        for ticket in tickets:
-            body_spin = {'ticket_id': ticket['id']}
-            spin_data = handle_request('POST', url_spin, headers, data=body_spin)
-            if spin_data:
-                print(f"{Fore.CYAN + Style.BRIGHT}Spin Reward: {spin_data.get('data', {}).get('type')}")
+def upgrade_mining(confirm):
+    if confirm.lower() == 'y':
+        response = requests.post(api_upgrade_mining, headers=headers)
+        if response.status_code == 200:
+            return '[ Upgrade Mining ]: Successful'
+        else:
+            return '[ Upgrade Mining ]: Insufficient balance'
+    else:
+        return None
 
-def task(token):
-    url_tasks = "https://elb.seeddao.org/api/v1/tasks/progresses"
-    headers = get_headers(token)
+def upgrade_holy(confirm):
+    if confirm.lower() == 'y':
+        response = requests.post(api_upgrade_holy, headers=headers)
+        if response.status_code == 200:
+            return '[ Upgrade Holy ]: Successful'
+        else:
+            return '[ Upgrade Holy ]: Requirements not met'
+    else:
+        return None
 
-    task_data = handle_request('GET', url_tasks, headers)
-    if task_data:
-        tasks = task_data.get('data', [])
-        for task in tasks:
-            url_complete = f"https://elb.seeddao.org/api/v1/tasks/{task['id']}"
-            task_complete_data = handle_request('POST', url_complete, headers)
-            if task_complete_data:
-                task_name = task.get('name', 'Unknown Task')  # الحصول على اسم المهمة
-                print(f"{Fore.GREEN + Style.BRIGHT}Task '{task_name}' Completed")  # طباعة المهام المكتملة بلون الأخضر
-            time.sleep(5)
+def fetch_tasks():
+    response = requests.get('https://elb.seeddao.org/api/v1/tasks/progresses', headers=headers)
+    tasks = response.json()['data']
+    for task in tasks:
+        if task['task_user'] is None or not task['task_user']['completed']:
+            mark_task_complete(task['id'], task['name'])
 
-def countdown_timer(seconds):
-    while seconds > 0:
-        mins, secs = divmod(seconds, 60)
-        hours, mins = divmod(mins, 60)
-        print(f"{Fore.CYAN + Style.BRIGHT}Wait {hours:02}:{mins:02}:{secs:02}", end='\r')
-        time.sleep(1)
-        seconds -= 1
-    print("Wait 00:00:00          ", end='\r')
+def mark_task_complete(task_id, task_name):
+    response = requests.post(f'https://elb.seeddao.org/api/v1/tasks/{task_id}', headers=headers)
+    if response.status_code == 200:
+        print(f"{Fore.GREEN+Back.BLACK+Style.BRIGHT}[ Tasks ]: Task {task_name} marked complete.")
+    else:
+        print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Tasks ]: Failed to complete task {task_name}, status code: {response.status_code}")
 
 def main():
-    clear_terminal()
-    art()
+    tokens = read_tokens()
 
-    run_task = input("Do you want to run task(token)? (y/n): ").strip().lower()
+    auto_upgrade_storage = input("Upgrade storage? (y/n): ")
+    auto_upgrade_mining = input("Upgrade mining? (y/n): ")
+    auto_upgrade_holy = input("Upgrade holy? (y/n): ")
+    auto_clear_tasks = input("Clear tasks? (y/n): ")
+
     while True:
-        tokens = load_tokens('data.txt')
+        storage_upgrade_result = upgrade_storage(auto_upgrade_storage)
+        mining_upgrade_result = upgrade_mining(auto_upgrade_mining)
+        holy_upgrade_result = upgrade_holy(auto_upgrade_holy)
+        
+        for index, token in enumerate(tokens):
+            headers['telegram-data'] = token
+            profile_info = fetch_profile()
+            if profile_info:
+                print(f"Processing for token {profile_info['data']['name']}")
 
-        clear_terminal()
-        art()
+            if storage_upgrade_result:
+                print(storage_upgrade_result)
+                time.sleep(1)
+            if mining_upgrade_result:
+                print(mining_upgrade_result)
+                time.sleep(1)
+            if holy_upgrade_result:
+                print(holy_upgrade_result)
+                time.sleep(1)
 
-        for i, token in enumerate(tokens, start=1):
-            print(f"{Fore.CYAN + Style.BRIGHT}------Account No.{i}------{Style.RESET_ALL}")
-            login(token)
-            daily_bonus(token)
-            claim(token)
-            spin(token)
-            if run_task == 'y':
-                task(token)
+            if verify_balance():
+                response = requests.post(api_claim, headers=headers)
+                if response.status_code == 200:
+                    print(f"{Fore.GREEN+Back.BLACK+Style.BRIGHT}[ Claim ]: Claim successful")
+                elif response.status_code == 400:
+                    response_data = response.json()
+                    print(f"{Fore.RED+Back.BLACK+Style.BRIGHT}[ Claim ]: Not yet time to claim")
+                else:
+                    print("An error occurred, status code:", response.status_code)
 
-        countdown_timer(1 * 60 * 60)
+                perform_daily_checkin()
+                capture_worm()
+                if auto_clear_tasks.lower() == 'y':
+                    fetch_tasks()
+
+            print(Fore.CYAN + Back.BLACK + Style.BRIGHT + f"\nFinished processing account. Moving to the next...\n")
+            time.sleep(5)
+        
+        for i in range(3600, 0, -1):
+            sys.stdout.write(f"\r{Fore.CYAN+Back.BLACK+Style.BRIGHT}============ Completed, waiting {i} seconds.. ============")
+            sys.stdout.flush()
+            time.sleep(1)
+        print()
+
+        clear_screen()
 
 if __name__ == "__main__":
     main()
