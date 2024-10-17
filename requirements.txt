@@ -1,4 +1,4 @@
-requests
 pytz
+requests
 colorama
-fake-useragent
+hydrogram
